@@ -2,7 +2,7 @@ import { scanAndGetRootedServers, getHackableServers } from "/src/lib/lib-server
 
 /** @param {NS} ns */
 export async function main(ns) {
-    ns.disableScriptLog(); // Disable script logging for cleaner output
+    // ns.disableScriptLog(); // Disable script logging for cleaner output - Temporarily commented out due to API version
 
     const workerScripts = {
         weaken: "/src/automated/server-management/weaken-worker.js",
