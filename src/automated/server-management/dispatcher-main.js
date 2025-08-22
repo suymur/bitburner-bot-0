@@ -89,7 +89,8 @@ export async function main(ns) {
                     ns.scriptKill(workerScripts.hack, target);
 
                     ns.tprint(`INFO: Dispatching ${action} on ${target} using ${maxThreads} threads on ${bestHost}`);
-                    ns.exec(scriptToRun, bestHost, maxThreads, target, Date.now()); // Add a unique arg to prevent caching issues
+                    // Corrected arguments: target is first, maxThreads is second, Date.now() is third (unused by worker)
+                    ns.exec(scriptToRun, bestHost, maxThreads, target, Date.now());
                 } else {
                     ns.tprint(`WARN: No available host with enough RAM to ${action} ${target}. Script RAM: ${scriptRam}`);
                 }
