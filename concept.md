@@ -108,8 +108,41 @@
 
 ## 7. Development Workflow
 *   **Iterative Development:** Focus on completing one stage before moving to the next, ensuring each stage is stable.
-*   **Unit Testing (Manual):** Test individual script components in isolation.
+*   **Unit Testing (Manual)::** Test individual script components in isolation.
 *   **Integration Testing (Manual):** Test how different scripts interact.
 *   **Version Control:** Use Bitburner's built-in save system and potentially external tools for backup.
 *   **Logging:** Implement verbose logging during development to debug issues.
 *   **File Management:** Organize scripts into logical directories (e.g., `/hack`, `/lib`, `/singularity`).
+
+## 8. File Naming Convention
+
+To ensure clarity, avoid conflicts, and facilitate easy identification of script purpose, the following naming conventions will be adopted:
+
+*   **General Structure:** `[purpose]-[sub-purpose]-[optional-descriptor].js`
+*   **Main/Orchestrator Scripts:**
+    *   Scripts intended to be run directly by the player or as the primary entry point for a module.
+    *   Convention: `[module-name]-main.js` or `[module-name]-controller.js`
+    *   Examples: `hack-main.js`, `server-manager-main.js`, `faction-controller.js`
+*   **Worker/Helper Scripts:**
+    *   Scripts that perform a specific, often repetitive, task and are typically `exec`'d by a main script.
+    *   Convention: `[action]-worker.js` or `[action]-loop.js`
+    *   Examples: `hack-worker.js`, `grow-worker.js`, `weaken-worker.js`, `nuke-server.js`
+*   **Library/Utility Scripts (in `lib/`):**
+    *   Scripts containing functions or classes intended to be imported and reused by other scripts.
+    *   Convention: `lib-[category]-[functionality].js` or `util-[functionality].js`
+    *   Examples: `lib-server-info.js`, `util-ram.js`, `lib-port-hacks.js`
+*   **Early Game Specific Scripts:**
+    *   Scripts primarily for the very initial stages, often semi-automated.
+    *   Convention: `early-[purpose].js`
+    *   Examples: `early-nuke-target.js`, `early-basic-hack.js`
+*   **Configuration Files:**
+    *   Files holding configurable parameters.
+    *   Convention: `config-[module].js`
+    *   Examples: `config-hacking.js`, `config-servers.js`
+
+**Specific Naming Guidelines:**
+
+*   Use **kebab-case** for file names (all lowercase, words separated by hyphens).
+*   Keep names concise but descriptive.
+*   Avoid generic names like `script.js` or `main.js` without a prefix.
+*   Ensure the name reflects the primary function of the script.
