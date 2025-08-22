@@ -1,0 +1,104 @@
+/** @param {NS} ns */
+export async function main(ns) {
+    // This script is intended to be imported as a library, not run directly.
+    ns.tprint("ERROR: lib-server-scanner.js is a library and should not be run directly.");
+}
+
+/**
+ * Scans the network, attempts to gain root access on unrooted servers,
+ * and returns a list of all rooted servers.
+ * @param {NS} ns
+ * @returns {string[]} An array of server hostnames that are rooted.
+ */
+export function scanAndGetRootedServers(ns) {
+    const servers = ['home']; // Start with home
+    const visited = new Set();
+    const rootedServers = new Set();
+
+    // Add port-opening programs you own to this list
+    const portPrograms = [
+        "BruteSSH.exe",
+        "FTPCrack.exe",
+        "relaySMTP.exe",
+        "HTTPWorm.exe",
+        "SQLInject.exe"
+    ];
+
+    let currentScan = ['home'];
+    let i = 0;
+
+    while (currentScan.length > 0) {
+        const server = currentScan.shift();
+
+        if (visited.has(server)) {
+            continue;
+        }
+        visited.add(server);
+
+        // Attempt to nuke if not rooted
+        if (!ns.hasRootAccess(server) && server !== 'home') {
+            let portsOpened = 0;
+            for (const program of portPrograms) {
+                if (ns.fileExists(program, "home")) {
+                    try {
+                        switch (program) {
+                            case "BruteSSH.exe": ns.brutessh(server); break;
+                            case "FTPCrack.exe": ns.ftpcrack(server); break;
+                            case "relaySMTP.exe": ns.relaysmtp(server); break;
+                            case "HTTPWorm.exe": ns.httpworm(server); break;
+                            case "SQLInject.exe": ns.sqlinject(server); break;
+                        }
+                        portsOpened++;
+                    } catch (e) {
+                        // ns.tprint(`WARN: Could not use ${program} on ${server}: ${e}`);
+                    }
+                }
+            }
+
+            if (portsOpened >= ns.getServerNumPortsRequired(server)) {
+                try {
+                    ns.nuke(server);
+                    ns.tprint(`SUCCESS: Gained root access on ${server}`);
+                } catch (e) {
+                    ns.tprint(`ERROR: Failed to nuke ${server} even with enough ports open: ${e}`);
+                }
+            } else {
+                // ns.tprint(`INFO: Not enough port programs to nuke ${server}. Needed: ${ns.getServerNumPortsRequired(server)}, Have: ${portsOpened}`);
+            }
+        }
+
+        if (ns.hasRootAccess(server)) {
+            rootedServers.add(server);
+        }
+
+        // Add connected servers to the scan queue
+        const connectedServers = ns.scan(server);
+        for (const connectedServer of connectedServers) {
+            if (!visited.has(connectedServer)) {
+                currentScan.push(connectedServer);
+            }
+        }
+    }
+    return Array.from(rootedServers);
+}
+
+/**
+ * Gets a list of all hackable servers (rooted, not home, not darkweb, not purchased, has money).
+ * @param {NS} ns
+ * @returns {string[]} An array of hackable server hostnames.
+ */
+export function getHackableServers(ns) {
+    const rootedServers = scanAndGetRootedServers(ns);
+    const hackableServers = [];
+
+    for (const server of rootedServers) {
+        if (server === 'home' || ns.getServerMaxMoney(server) === 0 || ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) {
+            continue; // Skip home, servers with no money, or servers we can't hack yet
+        }
+        // Add more conditions here if needed (e.g., not a purchased server, not darkweb)
+        if (!ns.getServerPurchasedByPlayer(server) && server !== "darkweb") {
+            hackableServers.push(server);
+        }
+    }
+    return hackableServers;
+}
