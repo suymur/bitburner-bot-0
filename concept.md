@@ -109,7 +109,7 @@
 ## 7. Development Workflow
 *   **Iterative Development:** Focus on completing one stage before moving to the next, ensuring each stage is stable.
 *   **Unit Testing (Manual)::** Test individual script components in isolation.
-*   **Integration Testing (Manual):** Test how different scripts interact.
+*   **Integration Testing (Manual)::** Test how different scripts interact.
 *   **Version Control:** Use Bitburner's built-in save system and potentially external tools for backup.
 *   **Logging:** Implement verbose logging during development to debug issues.
 *   **File Management:** Organize scripts into logical directories (e.g., `/hack`, `/lib`, `/singularity`).
