@@ -109,9 +109,9 @@ export function getHackableServers(ns) {
  * Copies worker scripts to a specified host if they are not already present.
  * @param {NS} ns
  * @param {string} host The target host to copy scripts to.
- * @returns {boolean} True if all scripts were copied or already existed, false otherwise.
+ * @returns {Promise<boolean>} True if all scripts were copied or already existed, false otherwise.
  */
-export function copyWorkerScripts(ns, host) {
+export async function copyWorkerScripts(ns, host) {
     const workerScripts = [
         "/src/automated/server-management/weaken-worker.js",
         "/src/automated/server-management/grow-worker.js",
@@ -121,7 +121,8 @@ export function copyWorkerScripts(ns, host) {
     let allCopied = true;
     for (const script of workerScripts) {
         if (!ns.fileExists(script, host)) {
-            if (ns.scp(script, host, "home")) {
+            // ns.scp is an async function, so we need to await it.
+            if (await ns.scp(script, host, "home")) {
                 ns.tprint(`INFO: Copied ${script} to ${host}`);
             } else {
                 ns.tprint(`ERROR: Failed to copy ${script} to ${host}`);

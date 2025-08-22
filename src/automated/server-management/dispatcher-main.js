@@ -20,13 +20,14 @@ export async function main(ns) {
         // For now, we'll include home.
 
         // Ensure worker scripts are on all hacking hosts
+        // Await the copyWorkerScripts function as it is now asynchronous
         for (const host of hackingHosts) {
-            copyWorkerScripts(ns, host);
+            await copyWorkerScripts(ns, host);
         }
 
         // Re-filter hacking hosts to only include those that have the worker scripts
-        // This is important because ns.scp is asynchronous and might not complete immediately,
-        // or if scp fails for some reason, we don't want to try to exec on that host.
+        // This check is still good to ensure the files are truly there,
+        // especially if copyWorkerScripts failed for some reason.
         hackingHosts = hackingHosts.filter(host => ns.fileExists(workerScripts.weaken, host));
 
 
