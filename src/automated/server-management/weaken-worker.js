@@ -1,18 +1,17 @@
 /** @param {NS} ns */
 export async function main(ns) {
-    const target = ns.args[0]; // Target server name
-    let threads = ns.args[1]; // Number of threads to use for the weaken operation
+    let threads = ns.args[0]; // Number of threads to use for the weaken operation
+    const target = ns.args[1]; // Target server name
 
-    // Validate target and threads
-    if (!target) {
-        ns.tprint("ERROR: weaken-worker.js requires a target as the first argument.");
-        ns.exit(); // Exit cleanly if critical argument is missing
+    // Validate threads and target
+    if (typeof threads !== 'number' || !Number.isInteger(threads) || threads <= 0) {
+        ns.tprint(`ERROR: weaken-worker.js received an invalid number of threads: ${threads}. Exiting.`);
+        ns.exit(); // Exit cleanly if threads argument is invalid
     }
 
-    // Ensure threads is a valid number.
-    if (typeof threads !== 'number' || !Number.isInteger(threads) || threads <= 0) {
-        ns.tprint(`ERROR: weaken-worker.js received an invalid number of threads for target ${target}: ${threads}. Exiting.`);
-        ns.exit(); // Exit cleanly if threads argument is invalid
+    if (!target) {
+        ns.tprint("ERROR: weaken-worker.js requires a target as the second argument.");
+        ns.exit(); // Exit cleanly if critical argument is missing
     }
 
     // Perform the weaken operation
