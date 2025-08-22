@@ -122,6 +122,9 @@ export async function copyWorkerScripts(ns, host) {
     for (const script of workerScripts) {
         if (!ns.fileExists(script, host)) {
             // ns.scp is an async function, so we need to await it.
+            // The issue was that the dispatcher was checking fileExists immediately after this call,
+            // but before the scp operation had actually completed on the target host.
+            // Awaiting here ensures the scp finishes before the function returns.
             if (await ns.scp(script, host, "home")) {
                 ns.tprint(`INFO: Copied ${script} to ${host}`);
             } else {

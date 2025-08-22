@@ -21,6 +21,7 @@ export async function main(ns) {
 
         // Ensure worker scripts are on all hacking hosts
         // Await the copyWorkerScripts function as it is now asynchronous
+        // This loop will now correctly wait for all SCP operations to complete for each host.
         for (const host of hackingHosts) {
             await copyWorkerScripts(ns, host);
         }
@@ -28,6 +29,7 @@ export async function main(ns) {
         // Re-filter hacking hosts to only include those that have the worker scripts
         // This check is still good to ensure the files are truly there,
         // especially if copyWorkerScripts failed for some reason.
+        // With the fix in copyWorkerScripts, this filter should now be more reliable.
         hackingHosts = hackingHosts.filter(host => ns.fileExists(workerScripts.weaken, host));
 
 
