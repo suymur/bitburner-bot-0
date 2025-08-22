@@ -64,7 +64,13 @@ export async function main(ns) {
             // 4. Dispatch the action to an available host
             if (action) {
                 const scriptToRun = workerScripts[action];
-                const scriptRam = ns.getScriptRam(scriptToRun, "home"); // RAM cost is same regardless of host
+                let scriptRam = ns.getScriptRam(scriptToRun, "home"); // RAM cost is same regardless of host
+
+                // Defensive check: If scriptRam is 0 or negative, we cannot run the script.
+                if (scriptRam <= 0) {
+                    ns.tprint(`ERROR: Script RAM for ${scriptToRun} is ${scriptRam}. Cannot dispatch.`);
+                    continue; // Skip this dispatch cycle for this target/action
+                }
 
                 // Find a host with enough RAM
                 let bestHost = null;
