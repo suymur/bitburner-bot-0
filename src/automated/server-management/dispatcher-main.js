@@ -13,25 +13,35 @@ export async function main(ns) {
     const minSecurityThresh = 5; // How much above min security we tolerate before weakening
     const minMoneyThresh = 0.75; // How much below max money we tolerate before growing
 
+    // Track problematic hosts to avoid repeatedly trying to dispatch to them if they fail
+    const problematicHosts = new Map(); // Map<hostname, timestamp_until_retry>
+    const RETRY_DELAY_MS = 5 * 60 * 1000; // 5 minutes before retrying a problematic host
+
     while (true) {
+        // Clean up problematic hosts map
+        const now = Date.now();
+        for (const [host, retryTime] of problematicHosts.entries()) {
+            if (now >= retryTime) {
+                problematicHosts.delete(host);
+                ns.tprint(`INFO: ${host} removed from problematic hosts list. Will retry dispatching.`);
+            }
+        }
+
         // 1. Get all available hacking hosts (rooted servers with RAM)
         let hackingHosts = scanAndGetRootedServers(ns).filter(server => ns.getServerMaxRam(server) > 0);
         // Filter out home if it's running other critical scripts and we want to reserve its RAM
         // For now, we'll include home.
 
         // Ensure worker scripts are on all hacking hosts
-        // Await the copyWorkerScripts function as it is now asynchronous
-        // This loop will now correctly wait for all SCP operations to complete for each host.
         for (const host of hackingHosts) {
             await copyWorkerScripts(ns, host);
         }
 
         // Re-filter hacking hosts to only include those that have the worker scripts
-        // This check is still good to ensure the files are truly there,
-        // especially if copyWorkerScripts failed for some reason.
-        // With the fix in copyWorkerScripts, this filter should now be more reliable.
         hackingHosts = hackingHosts.filter(host => ns.fileExists(workerScripts.weaken, host));
 
+        // Filter out currently problematic hosts
+        hackingHosts = hackingHosts.filter(host => !problematicHosts.has(host));
 
         // 2. Get all hackable targets
         const targets = getHackableServers(ns);
@@ -77,7 +87,12 @@ export async function main(ns) {
                 let maxThreads = 0;
 
                 for (const host of hackingHosts) {
-                    const availableRam = ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
+                    const totalRam = ns.getServerMaxRam(host);
+                    const usedRam = ns.getServerUsedRam(host);
+                    const availableRam = totalRam - usedRam;
+
+                    ns.tprint(`DEBUG: Host ${host} RAM: Total=${totalRam.toFixed(2)}GB, Used=${usedRam.toFixed(2)}GB, Available=${availableRam.toFixed(2)}GB`);
+
                     if (availableRam >= scriptRam) {
                         const currentThreads = Math.floor(availableRam / scriptRam);
                         if (currentThreads > maxThreads) {
@@ -94,17 +109,19 @@ export async function main(ns) {
                     ns.scriptKill(workerScripts.grow, target);
                     ns.scriptKill(workerScripts.hack, target);
 
-                    ns.tprint(`INFO: Dispatching ${action} on ${target} using ${maxThreads} threads on ${bestHost}`);
-                    // REVISED ARGUMENTS:
-                    // 1st arg to ns.exec: scriptToRun
-                    // 2nd arg to ns.exec: bestHost
-                    // 3rd arg to ns.exec (numThreads): 1 (since the worker script will use its own 'threads' argument)
-                    // 4th arg to ns.exec (ns.args[0] in worker): maxThreads (the actual number of threads for the operation)
-                    // 5th arg to ns.exec (ns.args[1] in worker): target
-                    // 6th arg to ns.exec (ns.args[2] in worker): Date.now() (unique arg to prevent caching)
-                    ns.exec(scriptToRun, bestHost, 1, maxThreads, target, Date.now());
+                    ns.tprint(`INFO: Dispatching ${action} on ${target} using ${maxThreads} threads on ${bestHost}. Script RAM: ${scriptRam.toFixed(2)}GB.`);
+                    
+                    // Execute the script and check the PID
+                    const pid = ns.exec(scriptToRun, bestHost, 1, maxThreads, target, Date.now());
+
+                    if (pid === 0) {
+                        ns.tprint(`ERROR: Failed to exec ${scriptToRun} on ${bestHost} for ${target}. PID was 0. Marking host as problematic.`);
+                        problematicHosts.set(bestHost, Date.now() + RETRY_DELAY_MS);
+                    } else {
+                        ns.tprint(`DEBUG: Successfully exec'd ${scriptToRun} on ${bestHost} with PID ${pid}.`);
+                    }
                 } else {
-                    ns.tprint(`WARN: No available host with enough RAM to ${action} ${target}. Script RAM: ${scriptRam}`);
+                    ns.tprint(`WARN: No available host with enough RAM to ${action} ${target}. Script RAM: ${scriptRam.toFixed(2)}GB.`);
                 }
             }
         }
