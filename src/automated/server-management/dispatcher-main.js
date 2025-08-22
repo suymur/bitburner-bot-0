@@ -1,4 +1,4 @@
-import { scanAndGetRootedServers, getHackableServers } from "/src/lib/lib-server-scanner.js";
+import { scanAndGetRootedServers, getHackableServers, copyWorkerScripts } from "/src/lib/lib-server-scanner.js";
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -15,9 +15,20 @@ export async function main(ns) {
 
     while (true) {
         // 1. Get all available hacking hosts (rooted servers with RAM)
-        const hackingHosts = scanAndGetRootedServers(ns).filter(server => ns.getServerMaxRam(server) > 0);
+        let hackingHosts = scanAndGetRootedServers(ns).filter(server => ns.getServerMaxRam(server) > 0);
         // Filter out home if it's running other critical scripts and we want to reserve its RAM
         // For now, we'll include home.
+
+        // Ensure worker scripts are on all hacking hosts
+        for (const host of hackingHosts) {
+            copyWorkerScripts(ns, host);
+        }
+
+        // Re-filter hacking hosts to only include those that have the worker scripts
+        // This is important because ns.scp is asynchronous and might not complete immediately,
+        // or if scp fails for some reason, we don't want to try to exec on that host.
+        hackingHosts = hackingHosts.filter(host => ns.fileExists(workerScripts.weaken, host));
+
 
         // 2. Get all hackable targets
         const targets = getHackableServers(ns);

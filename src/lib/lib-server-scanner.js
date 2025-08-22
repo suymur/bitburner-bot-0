@@ -104,3 +104,30 @@ export function getHackableServers(ns) {
     }
     return hackableServers;
 }
+
+/**
+ * Copies worker scripts to a specified host if they are not already present.
+ * @param {NS} ns
+ * @param {string} host The target host to copy scripts to.
+ * @returns {boolean} True if all scripts were copied or already existed, false otherwise.
+ */
+export function copyWorkerScripts(ns, host) {
+    const workerScripts = [
+        "/src/automated/server-management/weaken-worker.js",
+        "/src/automated/server-management/grow-worker.js",
+        "/src/automated/server-management/hack-worker.js",
+    ];
+
+    let allCopied = true;
+    for (const script of workerScripts) {
+        if (!ns.fileExists(script, host)) {
+            if (ns.scp(script, host, "home")) {
+                ns.tprint(`INFO: Copied ${script} to ${host}`);
+            } else {
+                ns.tprint(`ERROR: Failed to copy ${script} to ${host}`);
+                allCopied = false;
+            }
+        }
+    }
+    return allCopied;
+}
