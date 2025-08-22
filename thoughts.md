@@ -40,11 +40,11 @@ This points directly to the concept of a **Job Dispatcher**.
 
 ---
 
-## 2. Job Dispatcher vs. Edge Node Intelligence
+## 2. Job Dispatcher: Our Chosen Orchestration Model
 
-This is a crucial architectural decision for managing our distributed hacking operations.
+This is a crucial architectural decision for managing our distributed hacking operations. We will proceed with a Centralized Job Dispatcher model.
 
-### Option A: Centralized Job Dispatcher (Controller-Worker Model)
+### Centralized Job Dispatcher (Controller-Worker Model)
 
 *   **Concept:** A single, main script (the "Dispatcher" or "Controller") runs on the `home` server (or a powerful purchased server).
     *   It continuously scans the network for hackable targets.
@@ -61,32 +61,13 @@ This is a crucial architectural decision for managing our distributed hacking op
     *   **Simpler Workers:** Worker scripts are very lean, just performing their single task.
 
 *   **Cons:**
-    *   **Single Point of Failure:** If the dispatcher crashes, all hacking stops.
+    *   **Single Point of Failure:** If the dispatcher crashes, all hacking stops. (Mitigation: Make the dispatcher robust, and consider a simple "restart dispatcher" script).
     *   **RAM Usage:** The dispatcher itself might consume significant RAM on the `home` server, especially as complexity grows.
     *   **Network Overhead:** Constant `ns.exec` calls and potential `ns.kill` calls.
 
-### Option B: Distributed Intelligence (Edge Node Autonomy)
+### Decision: Proceed with Centralized Job Dispatcher
 
-*   **Concept:** Each controlled server (home, purchased, compromised) runs its *own* "smart" script (an "Edge Node" or "Autonomous Agent").
-    *   Each edge node would scan the network (or receive a list of targets from a very lightweight central script).
-    *   Each edge node would decide *for itself* which target to hack and which operation to perform, based on its local RAM and a shared strategy.
-    *   It would then run its own `hack`, `grow`, `weaken` operations locally.
-
-*   **Pros:**
-    *   **Resilience:** No single point of failure; if one node crashes, others continue.
-    *   **Reduced Network Overhead:** Less `ns.exec` traffic.
-    *   **Distributed RAM Usage:** Logic is spread out.
-
-*   **Cons:**
-    *   **Coordination Challenges:** How do nodes avoid hacking the same target inefficiently? How do they share target lists? How do they ensure optimal overall resource allocation?
-    *   **Redundant Logic:** Each node would need to contain the target selection and operation logic, leading to more complex worker scripts and potential for inconsistencies.
-    *   **Global Optimization Difficult:** Harder to achieve optimal overall system performance without a central coordinator.
-
-### Initial Recommendation: Centralized Job Dispatcher (Option A)
-
-For our initial stages, and given the Bitburner API, a **Centralized Job Dispatcher** seems more manageable and powerful. The `ns.exec` and `ns.kill` functions, combined with `ns.scan` and server info functions, lend themselves well to a controller-worker model. We can mitigate the single point of failure by making the dispatcher robust and potentially having a simple "restart dispatcher" script.
-
-This approach aligns well with the "auto scaling server" idea, as the dispatcher would be responsible for deciding where to run jobs and how many threads to use, effectively scaling operations across available RAM.
+For our initial stages, and given the Bitburner API, a **Centralized Job Dispatcher** is the most manageable and powerful approach. The `ns.exec` and `ns.kill` functions, combined with `ns.scan` and server info functions, lend themselves well to this controller-worker model. This approach aligns well with the "auto scaling server" idea, as the dispatcher will be responsible for deciding where to run jobs and how many threads to use, effectively scaling operations across available RAM.
 
 ---
 
@@ -109,9 +90,15 @@ If we go with a centralized dispatcher, how does it manage the *tasks* it needs 
     *   **Persistence:** How do we ensure the queue state survives a game restart? (Bitburner's `ns.read`/`ns.write` to a file, or `ns.getScriptLogs` for simple cases).
     *   **Job Definition:** What information does a "job" object need to contain (target, operation, threads, priority, estimated completion time)?
 
-### Next Steps for Discussion:
+---
 
-*   **Defining Worker Scripts:** Let's detail the exact arguments and behavior of `weaken-worker.js`, `grow-worker.js`, and `hack-worker.js`.
-*   **Dispatcher Logic:** How will the dispatcher scan, identify needs, and allocate resources?
-*   **Job Object Structure:** What will a job look like?
-*   **RAM Calculation:** How do we accurately calculate available RAM and required RAM for workers?
+## 4. Next Steps for Implementation: The Job Dispatcher
+
+Our immediate focus will shift towards building the foundational components for the Job Dispatcher. This will involve:
+
+*   **Defining Worker Scripts:** Creating the basic `weaken-worker.js`, `grow-worker.js`, and `hack-worker.js` scripts that will perform the actual operations. These will be very simple, taking a target and threads as arguments.
+*   **Server Scanning and Rooting:** Developing a utility to scan the network and automatically gain root access on new servers as port-opening programs become available. This will feed the dispatcher with a list of available hacking hosts.
+*   **Resource Management:** A system to track available RAM on all controlled servers.
+*   **Initial Dispatcher Logic:** A basic dispatcher that can identify a target, determine its needs (weaken/grow/hack), and launch the appropriate worker script on an available server.
+
+This will lay the groundwork for the more advanced job queue and dynamic scaling capabilities.
