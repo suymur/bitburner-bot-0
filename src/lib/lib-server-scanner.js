@@ -92,13 +92,15 @@ export function getHackableServers(ns) {
     const hackableServers = [];
 
     for (const server of rootedServers) {
-        if (server === 'home' || ns.getServerMaxMoney(server) === 0 || ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel()) {
-            continue; // Skip home, servers with no money, or servers we can't hack yet
+        // Skip home, servers with no money, or servers we can't hack yet
+        // Also skip "darkweb" as it's not a hackable server.
+        if (server === 'home' || ns.getServerMaxMoney(server) === 0 || ns.getServerRequiredHackingLevel(server) > ns.getHackingLevel() || server === "darkweb") {
+            continue;
         }
-        // Add more conditions here if needed (e.g., not a purchased server, not darkweb)
-        if (!ns.getServerPurchasedByPlayer(server) && server !== "darkweb") {
-            hackableServers.push(server);
-        }
+        // For now, we'll assume any other rooted server is a public server that can be hacked.
+        // If you later acquire purchased servers, and ns.getServerPurchasedByPlayer() is still unavailable,
+        // we'll need another way to identify and exclude them if desired.
+        hackableServers.push(server);
     }
     return hackableServers;
 }
