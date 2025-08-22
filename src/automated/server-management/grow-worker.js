@@ -1,7 +1,7 @@
 /** @param {NS} ns */
 export async function main(ns) {
     const target = ns.args[0]; // Target server name
-    let threads = ns.args[1]; // Number of threads to use
+    let threads = ns.args[1]; // Number of threads to use for the grow operation
 
     // Validate target and threads
     if (!target) {

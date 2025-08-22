@@ -95,8 +95,14 @@ export async function main(ns) {
                     ns.scriptKill(workerScripts.hack, target);
 
                     ns.tprint(`INFO: Dispatching ${action} on ${target} using ${maxThreads} threads on ${bestHost}`);
-                    // Corrected arguments: target is first, maxThreads is second, Date.now() is third (unused by worker)
-                    ns.exec(scriptToRun, bestHost, maxThreads, target, Date.now());
+                    // Corrected arguments:
+                    // 1st arg to ns.exec: scriptToRun
+                    // 2nd arg to ns.exec: bestHost
+                    // 3rd arg to ns.exec (numThreads): 1 (since the worker script will use its own 'threads' argument)
+                    // 4th arg to ns.exec (ns.args[0] in worker): target
+                    // 5th arg to ns.exec (ns.args[1] in worker): maxThreads (the actual number of threads for the operation)
+                    // 6th arg to ns.exec (ns.args[2] in worker): Date.now() (unique arg to prevent caching)
+                    ns.exec(scriptToRun, bestHost, 1, target, maxThreads, Date.now());
                 } else {
                     ns.tprint(`WARN: No available host with enough RAM to ${action} ${target}. Script RAM: ${scriptRam}`);
                 }
