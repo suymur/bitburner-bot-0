@@ -1,4 +1,5 @@
 // from: https://github.com/alainbryden/bitburner-scripts/blob/main/git-pull.js
+
 let options;
 const argsSchema = [
     ['github', 'suymur'],
