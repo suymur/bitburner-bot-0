@@ -4,36 +4,68 @@ This repository contains a progressive suite of Bitburner scripts designed to au
 
 ## Current Progress
 
-We have successfully implemented the very first script, focusing on the initial stages of the game.
+We have made significant progress towards a more automated and scalable hacking system.
 
-*   **Stage 1: Initial Setup & Basic Hacking (In Progress)**
-    *   **`src/early-game/semi-automated/early-n00dles-hacker.js`**: A foundational script to gain root access and perform basic hack/grow/weaken operations on the `n00dles` server. This script is designed for players just starting out, right after the tutorial.
+*   **Stage 1: Initial Setup & Basic Hacking (Completed)**
+    *   **`src/early-game/semi-automated/early-n00dles-hacker.js`**: A foundational script for early game, now superseded by the dispatcher for broader automation.
+
+*   **Stage 2: Server Management & Expansion (In Progress - Core Dispatcher Implemented)**
+    *   **`src/automated/server-management/dispatcher-main.js`**: The central orchestrator for our hacking operations. It scans the network, identifies targets, determines optimal actions (weaken, grow, hack), and dispatches worker scripts to available servers.
+    *   **`src/automated/server-management/weaken-worker.js`**: A lightweight script executed by the dispatcher to perform `ns.weaken` on a target.
+    *   **`src/automated/server-management/grow-worker.js`**: A lightweight script executed by the dispatcher to perform `ns.grow` on a target.
+    *   **`src/automated/server-management/hack-worker.js`**: A lightweight script executed by the dispatcher to perform `ns.hack` on a target.
+    *   **`src/lib/lib-server-scanner.js`**: A utility library used by the dispatcher to scan the network, attempt to gain root access on new servers, and identify hackable targets.
 
 ## What You Can Do Now
 
-You can use the `early-n00dles-hacker.js` script to start earning money and gain early experience.
+You can now run the `dispatcher-main.js` script to automate hacking across all available rooted servers.
 
-**How to Use `early-n00dles-hacker.js`:**
+**How to Use the Dispatcher:**
 
-1.  **Copy the script:** Ensure `early-n00dles-hacker.js` is in your Bitburner game's `src/early-game/semi-automated/` directory.
-2.  **Run the script:**
+1.  **Ensure Files are Present:**
+    *   `src/automated/server-management/dispatcher-main.js`
+    *   `src/automated/server-management/weaken-worker.js`
+    *   `src/automated/server-management/grow-worker.js`
+    *   `src/automated/server-management/hack-worker.js`
+    *   `src/lib/lib-server-scanner.js`
+
+2.  **Copy Worker Scripts to Hacking Hosts:**
+    The worker scripts (`weaken-worker.js`, `grow-worker.js`, `hack-worker.js`) need to be present on *any server you want to use as a hacking host* (e.g., `home`, `n00dles`, or any other server you gain root access to).
+    *   From your Bitburner terminal, for each worker script and each host you want to use:
+        ```bash
+        run ns.scp("src/automated/server-management/weaken-worker.js", "home")
+        run ns.scp("src/automated/server-management/grow-worker.js", "home")
+        run ns.scp("src/automated/server-management/hack-worker.js", "home")
+        # If you have n00dles rooted and want to use it:
+        run ns.scp("src/automated/server-management/weaken-worker.js", "n00dles")
+        run ns.scp("src/automated/server-management/grow-worker.js", "n00dles")
+        run ns.scp("src/automated/server-management/hack-worker.js", "n00dles")
+        # ... and so on for any other rooted servers you acquire.
+        ```
+    *   *Note:* The `lib-server-scanner.js` and `dispatcher-main.js` only need to be on your `home` server.
+
+3.  **Run the Dispatcher:**
     *   Open your terminal in Bitburner.
-    *   Navigate to the script's directory: `cd src/early-game/semi-automated/`
-    *   Run the script: `run early-n00dles-hacker.js`
+    *   Navigate to the dispatcher's directory: `cd src/automated/server-management/`
+    *   Run the script: `run dispatcher-main.js`
 
 **What to Expect:**
 
-*   The script will first attempt to gain root access on `n00dles`.
-    *   If you have enough port-opening programs (e.g., `BruteSSH.exe`, `FTPCrack.exe`), it will automatically `nuke` the server.
-    *   If you don't have enough programs, it will print an error message and instruct you to manually `nuke n00dles` once you acquire the necessary programs or skills.
-*   Once root access is established, the script will enter a continuous loop, performing `weaken`, `grow`, and `hack` operations on `n00dles` to keep its security low and money high, maximizing your early income.
+*   The dispatcher will continuously scan your network for servers.
+*   It will attempt to gain root access on unrooted servers using any port-opening programs you possess.
+*   It will identify hackable targets (servers with money and within your hacking level).
+*   For each target, it will determine if it needs to be weakened, grown, or hacked.
+*   It will then find an available server (from your `home` server, purchased servers, or rooted public servers that have the worker scripts copied to them) with enough RAM.
+*   It will `ns.exec` the appropriate worker script on that server, allocating as many threads as possible.
+*   You will see `INFO` messages in your terminal indicating which actions are being dispatched to which servers.
 
 ## Next Steps
 
-Our immediate next steps will focus on expanding the early-game capabilities and moving towards more automated processes:
+Our immediate next steps will focus on refining the dispatcher and expanding its capabilities:
 
-1.  **Generalize Early Hacking:** Modify the current script or create a new one to dynamically find and hack *any* accessible early-game server, not just `n00dles`.
-2.  **Automate Root Access:** Develop a more robust system for automatically gaining root access on new servers as programs are acquired.
-3.  **Basic Server Purchasing:** Begin automating the purchase of early private servers to expand our network.
+1.  **Automated Worker Deployment:** Implement a system within the dispatcher or a helper script to automatically `ns.scp` worker scripts to newly rooted servers.
+2.  **Target Prioritization:** Enhance the dispatcher's logic to intelligently prioritize hacking targets for maximum income.
+3.  **Purchased Server Automation:** Integrate logic for automatically purchasing and upgrading private servers to expand our hacking network.
+4.  **Job Queue Implementation:** Develop a robust job queue system to manage and prioritize hacking tasks more effectively.
 
 Stay tuned for more updates as we progress through the development stages outlined in `concept.md`!
